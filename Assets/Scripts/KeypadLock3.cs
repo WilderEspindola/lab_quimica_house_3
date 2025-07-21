@@ -1,0 +1,76 @@
+using UnityEngine;
+using TMPro;
+using System.Collections;
+
+public class KeypadLock3 : MonoBehaviour
+{
+    [Header("Configuración Keypad 3")]
+    public TextMeshPro passCodeDisplay;
+    public GameObject[] keyButtons;
+
+    private string currentInput = "";  // Cambiado de currentCode a currentInput
+    private int savedValue = 1;        // Cambiado de string savedCode="?" a int con valor inicial 1
+
+    // Evento estático para notificar cambios
+    public static System.Action<char, int> OnKeypadValueChanged;
+    public char associatedLetter = 'C'; // Letra asociada C para KeypadLock3
+
+    void Start()
+    {
+        passCodeDisplay.text = savedValue.ToString();  // Mostrar valor numérico inicial
+        SetKeypadVisible(false);
+    }
+
+    public void AddDigit(string digit)
+    {
+        if (currentInput.Length < 2)  // Limitar a 2 dígitos (coeficientes 1-12)
+            currentInput += digit;
+
+        passCodeDisplay.text = currentInput;
+    }
+
+    public void SaveCode()
+    {
+        if (!string.IsNullOrEmpty(currentInput))
+        {
+            savedValue = int.Parse(currentInput);
+
+            // Mostrar confirmación sin caracteres especiales
+            passCodeDisplay.text = savedValue + " (OK)";
+
+            OnKeypadValueChanged?.Invoke(associatedLetter, savedValue);
+
+            // Corutina para resetear el mensaje
+            StartCoroutine(ResetDisplayAfterDelay(1f));
+        }
+        currentInput = "";
+        SetKeypadVisible(false);
+    }
+
+    private IEnumerator ResetDisplayAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        passCodeDisplay.text = savedValue.ToString();
+    }
+    // --- Métodos que NO cambiaron ---
+    public void ToggleKeypad()
+    {
+        bool newState = !keyButtons[0].activeSelf;
+        SetKeypadVisible(newState);
+        if (newState) currentInput = "";
+    }
+
+    private void SetKeypadVisible(bool visible)
+    {
+        foreach (var button in keyButtons)
+            button.SetActive(visible);
+
+        passCodeDisplay.text = visible ? currentInput : savedValue.ToString();
+    }
+
+    public void ClearCode()
+    {
+        currentInput = "";
+        passCodeDisplay.text = savedValue.ToString();
+    }
+}
