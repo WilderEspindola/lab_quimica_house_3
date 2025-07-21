@@ -15,6 +15,7 @@ public class FlowManager : MonoBehaviour
     public List<GameObject> Sockets = new List<GameObject>();
     public GameObject HandAnimation;
     public bool IsPracticeMode = false;
+    public List<GameObject> Keypads = new List<GameObject>(); // Arrastra todos los keypads aquí en el Inspector
 
     // Variables para ecuaciones químicas
     private ReactionManager.SerializableChemicalEquation currentEquation;
@@ -58,7 +59,9 @@ public class FlowManager : MonoBehaviour
         DisableSockets();
         HandAnimation.SetActive(false);
         IsPracticeMode = false;
+         
     }
+   
 
     // --- Gestos ---
     public void RightHandThumpsUpPerformed()
@@ -71,6 +74,7 @@ public class FlowManager : MonoBehaviour
         GameManager.Instance.MathematicsValues.gameObject.SetActive(true);
         EnableSockets();
         HandAnimation.SetActive(true);
+       
     }
 
     public void RightShakaPerformed()
@@ -82,6 +86,7 @@ public class FlowManager : MonoBehaviour
         GameManager.Instance.MathematicsValues.gameObject.SetActive(true);
         StartNewChemicalEquation();
         StartCountdown();
+       
     }
 
     public void LeftHandThumpsUpPerformed()
