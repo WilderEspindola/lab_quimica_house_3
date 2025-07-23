@@ -34,24 +34,14 @@ public class KeypadLock2 : MonoBehaviour
         if (!string.IsNullOrEmpty(currentInput))
         {
             savedValue = int.Parse(currentInput);
-
-            // Mostrar confirmación sin caracteres especiales
-            passCodeDisplay.text = savedValue + " (OK)";
-
+            passCodeDisplay.text = savedValue.ToString();
             OnKeypadValueChanged?.Invoke(associatedLetter, savedValue);
-
-            // Corutina para resetear el mensaje
-            StartCoroutine(ResetDisplayAfterDelay(1f));
         }
         currentInput = "";
         SetKeypadVisible(false);
     }
 
-    private IEnumerator ResetDisplayAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        passCodeDisplay.text = savedValue.ToString();
-    }
+    
 
     // --- Métodos que NO cambiaron ---
     public void ToggleKeypad()

@@ -14,7 +14,6 @@ public class FlowManager : MonoBehaviour
     // Sistema de sockets y gestos
     public List<GameObject> Sockets = new List<GameObject>();
     public GameObject HandAnimation;
-    public bool IsPracticeMode = false;
     public List<GameObject> Keypads = new List<GameObject>(); // Arrastra todos los keypads aquí en el Inspector
 
     // Variables para ecuaciones químicas
@@ -58,15 +57,15 @@ public class FlowManager : MonoBehaviour
         GameManager.Instance.LeftThumbsUp.gameObject.SetActive(false);
         DisableSockets();
         HandAnimation.SetActive(false);
-        IsPracticeMode = false;
-         
+
+
     }
-   
+
 
     // --- Gestos ---
     public void RightHandThumpsUpPerformed()
     {
-        IsPracticeMode = true;
+
         GameManager.Instance.UI_Messages.text = "Modo Práctica: Usa los keypads. ✋ Thumbs Up izquierdo para salir.";
         GameManager.Instance.RightThumbsUp.gameObject.SetActive(false);
         GameManager.Instance.RightShaka.gameObject.SetActive(false);
@@ -74,31 +73,25 @@ public class FlowManager : MonoBehaviour
         GameManager.Instance.MathematicsValues.gameObject.SetActive(true);
         EnableSockets();
         HandAnimation.SetActive(true);
-       
+
     }
 
     public void RightShakaPerformed()
     {
-        IsPracticeMode = false;
+ 
         GameManager.Instance.UI_Messages.text = "¡Balancea la ecuación!";
         GameManager.Instance.RightThumbsUp.gameObject.SetActive(false);
         GameManager.Instance.RightShaka.gameObject.SetActive(false);
         GameManager.Instance.MathematicsValues.gameObject.SetActive(true);
+        GameManager.Instance.LeftThumbsUp.gameObject.SetActive(false); // Ocultar hasta terminar
         StartNewChemicalEquation();
         StartCountdown();
-       
+
     }
 
     public void LeftHandThumpsUpPerformed()
     {
-        if (IsPracticeMode)
-        {
-            InitializeGame();
-        }
-        else
-        {
-            RestartScene();
-        }
+        RestartScene();
     }
 
     // --- Temporizador ---
@@ -124,6 +117,10 @@ public class FlowManager : MonoBehaviour
     {
         GameManager.Instance.Timer.enabled = false;
         CheckChemicalBalance();
+        // Activar gesto de salida siempre al terminar el tiempo
+        GameManager.Instance.LeftThumbsUp.gameObject.SetActive(true);
+
+        
     }
 
     // --- Sistema Químico ---
@@ -226,7 +223,6 @@ public class FlowManager : MonoBehaviour
     // --- Keypads y validación ---
     private void UpdateKeypadValue(char variable, int value)
     {
-        // Actualizar el valor
         if (!keypadValues.ContainsKey(variable))
         {
             GameManager.Instance.UI_Messages.text += $"\nERROR: Variable {variable} no existe";
@@ -236,46 +232,34 @@ public class FlowManager : MonoBehaviour
         keypadValues[variable] = value;
         UpdateCoefficientVariable(variable, value);
 
-        // Mostrar confirmación en UI
-        string currentMessage = GameManager.Instance.UI_Messages.text;
-        string newMessage = $"\nKeypad {variable} actualizado a {value}";
-
-        // Mantener solo los últimos 5 mensajes para no saturar la UI
-        string[] lines = currentMessage.Split('\n');
-        if (lines.Length > 5)
-        {
-            currentMessage = string.Join("\n", lines.Skip(lines.Length - 5));
-        }
-
-        GameManager.Instance.UI_Messages.text = currentMessage + newMessage;
-
-        // Mostrar estado actual de todos los keypads
-        UpdateKeypadsStatusMessage();
-
-        if (!IsPracticeMode) CheckChemicalBalance();
+        // Verificar balance siempre (ya no hay distinción por modo)
+        CheckChemicalBalance();
     }
 
     private void UpdateKeypadsStatusMessage()
     {
-        // Crear mensaje de estado
-        string statusMessage = "\n\n[Estado Actual]";
-        statusMessage += $"\nA: {keypadValues['A']} | B: {keypadValues['B']} | C: {keypadValues['C']}";
-        statusMessage += $"\nD: {keypadValues['D']} | E: {keypadValues['E']} | F: {keypadValues['F']}";
+        // 1. Crear el mensaje de estado limpio
+        string statusMessage = "[Coeficientes Actuales]\n";
+        statusMessage += $"Reactivos: A={keypadValues['A']}  B={keypadValues['B']}  C={keypadValues['C']}\n";
+        statusMessage += $"Productos: D={keypadValues['D']}  E={keypadValues['E']}  F={keypadValues['F']}";
 
-        // Actualizar UI manteniendo el historial
+        // 2. Obtener el texto actual sin el estado previo
         string currentText = GameManager.Instance.UI_Messages.text;
-        int lastStatusIndex = currentText.IndexOf("\n\n[Estado Actual]");
+        int lastStatusIndex = currentText.IndexOf("[Coeficientes Actuales]");
 
-        if (lastStatusIndex >= 0)
+        string newText = lastStatusIndex >= 0
+            ? currentText.Substring(0, lastStatusIndex)
+            : currentText;
+
+        // 3. Limitar el historial de mensajes
+        string[] messageLines = newText.Split('\n');
+        if (messageLines.Length > 8) // Mantener solo las últimas 8 líneas
         {
-            // Reemplazar el estado anterior
-            GameManager.Instance.UI_Messages.text = currentText.Substring(0, lastStatusIndex) + statusMessage;
+            newText = string.Join("\n", messageLines.Skip(messageLines.Length - 8));
         }
-        else
-        {
-            // Agregar nuevo estado
-            GameManager.Instance.UI_Messages.text += statusMessage;
-        }
+
+        // 4. Actualizar UI con el nuevo estado
+        GameManager.Instance.UI_Messages.text = $"{newText.Trim()}\n\n{statusMessage}";
     }
 
     private void UpdateCoefficientVariable(char variable, int value)
@@ -305,7 +289,7 @@ public class FlowManager : MonoBehaviour
         // 2. Verificar ecuación existente
         if (currentEquation == null)
         {
-            GameManager.Instance.UI_Messages.text = "Error: No hay ecuación activa";
+            //GameManager.Instance.UI_Messages.text = "Error: No hay ecuación activa";
             return;
         }
 
@@ -368,7 +352,13 @@ public class FlowManager : MonoBehaviour
         // 8. Resultado final
         debugMessage += isBalanced ? "✅ BALANCEADA" : "❌ DESBALANCEADA";
         GameManager.Instance.UI_Messages.text = debugMessage;
-        GameManager.Instance.LeftThumbsUp.gameObject.SetActive(true);
+
+        // Activar gesto si está balanceada
+        if (isBalanced)
+        {
+            GameManager.Instance.LeftThumbsUp.gameObject.SetActive(true);
+            GameManager.Instance.Timer.enabled = false; // Detener temporizador si se balanceó antes
+        }
     }
 
     private void AddCompoundAtoms(ReactionManager.SerializableCompound compound, int coefficient, Dictionary<string, int> targetDict)
