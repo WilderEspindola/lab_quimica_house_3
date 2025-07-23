@@ -232,6 +232,9 @@ public class FlowManager : MonoBehaviour
         keypadValues[variable] = value;
         UpdateCoefficientVariable(variable, value);
 
+        // Actualizar la interfaz de usuario
+        UpdateKeypadsStatusMessage(); // ¡Esta línea faltaba!
+
         // Verificar balance siempre (ya no hay distinción por modo)
         CheckChemicalBalance();
     }
